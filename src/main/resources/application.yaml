@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: wallet
+
+  r2dbc:
+    username: wallet
+    password: wallet
+    url: r2dbc:postgresql://localhost:5432/wallet
+
+  liquibase:
+    url: jdbc:postgresql://localhost:5432/wallet
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+    change-log: classpath:db/changelog/db.changelog-master.yaml
