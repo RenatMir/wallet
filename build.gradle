@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'idea'
     id 'org.springframework.boot' version '3.4.6'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -25,6 +26,11 @@ repositories {
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     // DB
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
@@ -32,12 +38,15 @@ dependencies {
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
 
-//    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    // LOMBOK
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+
 //    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
-//
-//    compileOnly 'org.projectlombok:lombok'
 //    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-//    annotationProcessor 'org.projectlombok:lombok'
 //    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 //    testImplementation 'io.projectreactor:reactor-test'
 //    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

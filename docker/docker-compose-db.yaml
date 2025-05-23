@@ -9,4 +9,4 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./volume/postgres/wallet:/data
+      - ./volume/postgres/wallet:/var/lib/postgresql/data
