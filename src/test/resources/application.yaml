@@ -15,3 +15,17 @@ spring:
     user: ${spring.datasource.username}
     password: ${spring.datasource.password}
     change-log: classpath:db/changelog/db.changelog-master.yaml
+
+logbook:
+  predicate:
+    exclude:
+      - path: /actuator/**
+  format:
+    style: json
+
+logging:
+  level:
+    org:
+      zalando:
+        logbook:
+          Logbook: trace
