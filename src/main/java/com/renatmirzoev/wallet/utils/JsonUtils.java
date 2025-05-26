@@ -1,4 +1,4 @@
-package com.renatmirzoev.wallet;
+package com.renatmirzoev.wallet.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -13,11 +13,7 @@ public class JsonUtils {
     private JsonUtils() {
     }
 
-    public static final ObjectMapper MAPPER;
-
-    static {
-        MAPPER = new JsonConfig().objectMapper();
-    }
+    private static final ObjectMapper MAPPER = new JsonConfig().objectMapper();
 
     public static <T> String toJson(T object) {
         try {

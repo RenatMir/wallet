@@ -4,7 +4,8 @@ import com.renatmirzoev.wallet.exception.OutOfMoneyException;
 import com.renatmirzoev.wallet.exception.PlayerAlreadyExistException;
 import com.renatmirzoev.wallet.exception.PlayerNotFoundException;
 import com.renatmirzoev.wallet.model.entity.Player;
-import com.renatmirzoev.wallet.repository.PlayerRepository;
+import com.renatmirzoev.wallet.repository.cache.PlayerCacheRepository;
+import com.renatmirzoev.wallet.repository.db.PlayerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,11 +19,12 @@ import java.util.Optional;
 @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 public class PlayerService {
 
+    private final PlayerCacheRepository playerCacheRepository;
     private final PlayerRepository playerRepository;
 
-    public Player getPlayerById(long playerId) {
-        return playerRepository.getById(playerId)
-            .orElseThrow(() -> new PlayerNotFoundException("Player %s not found".formatted(playerId)));
+    public Optional<Player> getPlayerById(long playerId) {
+        return playerCacheRepository.getById(playerId)
+            .or(() -> playerRepository.getById(playerId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
@@ -37,7 +39,7 @@ public class PlayerService {
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     public void updatePlayerBalance(long playerId, BigDecimal balance) {
-        Optional<Player> playerOptional = playerRepository.getById(playerId);
+        Optional<Player> playerOptional = getPlayerById(playerId);
         if (playerOptional.isEmpty()) {
             throw new PlayerNotFoundException("Player %s not found".formatted(playerId));
         }

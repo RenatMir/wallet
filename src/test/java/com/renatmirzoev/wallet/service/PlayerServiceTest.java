@@ -5,9 +5,12 @@ import com.renatmirzoev.wallet.exception.OutOfMoneyException;
 import com.renatmirzoev.wallet.exception.PlayerAlreadyExistException;
 import com.renatmirzoev.wallet.exception.PlayerNotFoundException;
 import com.renatmirzoev.wallet.model.entity.Player;
-import com.renatmirzoev.wallet.repository.PlayerRepository;
+import com.renatmirzoev.wallet.repository.cache.PlayerCacheRepository;
+import com.renatmirzoev.wallet.repository.db.PlayerRepository;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,7 +23,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,67 +33,117 @@ class PlayerServiceTest {
 
     @Mock
     private PlayerRepository playerRepository;
+    @Mock
+    private PlayerCacheRepository playerCacheRepository;
     @InjectMocks
     private PlayerService playerService;
 
     private final Player player = ModelUtils.createPlayer();
 
-    @Test
-    void shouldCreatePlayer() {
-        long expectedPlayerId = 1;
+    @Nested
+    class GetPlayerById {
 
-        when(playerRepository.save(any(Player.class))).thenReturn(expectedPlayerId);
-        when(playerRepository.getByEmail(anyString())).thenReturn(Optional.empty());
+        @Test
+        void shouldGetPlayerFromCache() {
+            when(playerCacheRepository.getById(anyLong())).thenReturn(Optional.of(player));
 
-        long playerId = playerService.createPlayer(player);
+            Optional<Player> playerOptional = playerService.getPlayerById(Long.MAX_VALUE);
+            assertThat(playerOptional).isPresent().contains(player);
 
-        assertThat(playerId).isEqualTo(expectedPlayerId);
-        verify(playerRepository).getByEmail(anyString());
-        verify(playerRepository).save(any(Player.class));
+            verify(playerCacheRepository).getById(anyLong());
+            verifyNoInteractions(playerRepository);
+        }
+
+        @Test
+        void shouldGetPlayerFromDb() {
+            when(playerCacheRepository.getById(anyLong())).thenReturn(Optional.empty());
+            when(playerRepository.getById(anyLong())).thenReturn(Optional.of(player));
+
+            Optional<Player> playerOptional = playerService.getPlayerById(Long.MAX_VALUE);
+            assertThat(playerOptional).isPresent().contains(player);
+
+            InOrder inOrder = inOrder(playerRepository, playerCacheRepository);
+            inOrder.verify(playerCacheRepository).getById(anyLong());
+            inOrder.verify(playerRepository).getById(anyLong());
+        }
+
+        @Test
+        void shouldGetOptionalEmptyFromDb() {
+            when(playerCacheRepository.getById(anyLong())).thenReturn(Optional.empty());
+            when(playerRepository.getById(anyLong())).thenReturn(Optional.empty());
+
+            Optional<Player> playerOptional = playerService.getPlayerById(Long.MAX_VALUE);
+            assertThat(playerOptional).isEmpty();
+
+            InOrder inOrder = inOrder(playerRepository, playerCacheRepository);
+            inOrder.verify(playerCacheRepository).getById(anyLong());
+            inOrder.verify(playerRepository).getById(anyLong());
+        }
     }
 
-    @Test
-    void shouldThrowPlayerAlreadyExistsExceptionOnCreatePlayer() {
-        when(playerRepository.getByEmail(anyString())).thenReturn(Optional.of(player));
+    @Nested
+    class CreatePlayer {
 
-        assertThatThrownBy(() -> playerService.createPlayer(player))
-            .isInstanceOf(PlayerAlreadyExistException.class);
+        @Test
+        void shouldCreatePlayer() {
+            long expectedPlayerId = 1;
 
-        verify(playerRepository).getByEmail(anyString());
+            when(playerRepository.save(any(Player.class))).thenReturn(expectedPlayerId);
+            when(playerRepository.getByEmail(anyString())).thenReturn(Optional.empty());
+
+            long playerId = playerService.createPlayer(player);
+
+            assertThat(playerId).isEqualTo(expectedPlayerId);
+            verify(playerRepository).getByEmail(anyString());
+            verify(playerRepository).save(any(Player.class));
+        }
+
+        @Test
+        void shouldThrowPlayerAlreadyExistsExceptionOnCreatePlayer() {
+            when(playerRepository.getByEmail(anyString())).thenReturn(Optional.of(player));
+
+            assertThatThrownBy(() -> playerService.createPlayer(player))
+                .isInstanceOf(PlayerAlreadyExistException.class);
+
+            verify(playerRepository).getByEmail(anyString());
+        }
     }
 
+    @Nested
+    class UpdatePlayerBalance {
 
-    @Test
-    void shouldUpdatePlayerBalance() {
-        when(playerRepository.getById(anyLong())).thenReturn(Optional.of(player));
-        when(playerRepository.updateBalance(anyLong(), any(BigDecimal.class))).thenReturn(1);
+        @Test
+        void shouldUpdatePlayerBalance() {
+            when(playerRepository.getById(anyLong())).thenReturn(Optional.of(player));
+            when(playerRepository.updateBalance(anyLong(), any(BigDecimal.class))).thenReturn(1);
 
-        playerService.updatePlayerBalance(1, BigDecimal.TEN);
+            playerService.updatePlayerBalance(1, BigDecimal.TEN);
 
-        verify(playerRepository).getById(anyLong());
-        verify(playerRepository).updateBalance(anyLong(), any(BigDecimal.class));
-    }
+            verify(playerRepository).getById(anyLong());
+            verify(playerRepository).updateBalance(anyLong(), any(BigDecimal.class));
+        }
 
-    @Test
-    void shouldThrowPlayerNotFoundExceptionOnUpdatePlayerBalance() {
-        when(playerRepository.getById(anyLong())).thenReturn(Optional.empty());
+        @Test
+        void shouldThrowPlayerNotFoundExceptionOnUpdatePlayerBalance() {
+            when(playerRepository.getById(anyLong())).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> playerService.updatePlayerBalance(1, BigDecimal.TEN))
-            .isInstanceOf(PlayerNotFoundException.class);
+            assertThatThrownBy(() -> playerService.updatePlayerBalance(1, BigDecimal.TEN))
+                .isInstanceOf(PlayerNotFoundException.class);
 
-        verify(playerRepository).getById(anyLong());
+            verify(playerRepository).getById(anyLong());
 
-    }
+        }
 
-    @Test
-    void shouldThrowOutOfMoneyExceptionOnUpdatePlayerBalance() {
-        when(playerRepository.getById(anyLong())).thenReturn(Optional.of(player));
-        when(playerRepository.updateBalance(anyLong(), any(BigDecimal.class))).thenReturn(0);
+        @Test
+        void shouldThrowOutOfMoneyExceptionOnUpdatePlayerBalance() {
+            when(playerRepository.getById(anyLong())).thenReturn(Optional.of(player));
+            when(playerRepository.updateBalance(anyLong(), any(BigDecimal.class))).thenReturn(0);
 
-        assertThatThrownBy(() -> playerService.updatePlayerBalance(1, BigDecimal.TEN))
-            .isInstanceOf(OutOfMoneyException.class);
+            assertThatThrownBy(() -> playerService.updatePlayerBalance(1, BigDecimal.TEN))
+                .isInstanceOf(OutOfMoneyException.class);
 
-        verify(playerRepository).getById(anyLong());
-        verify(playerRepository).updateBalance(anyLong(), any(BigDecimal.class));
+            verify(playerRepository).getById(anyLong());
+            verify(playerRepository).updateBalance(anyLong(), any(BigDecimal.class));
+        }
     }
 }

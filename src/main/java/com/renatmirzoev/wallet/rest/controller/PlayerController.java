@@ -1,5 +1,6 @@
 package com.renatmirzoev.wallet.rest.controller;
 
+import com.renatmirzoev.wallet.exception.PlayerNotFoundException;
 import com.renatmirzoev.wallet.mapper.PlayerMapper;
 import com.renatmirzoev.wallet.model.entity.Player;
 import com.renatmirzoev.wallet.rest.model.CreatePlayerRequest;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/players")
@@ -29,14 +31,17 @@ public class PlayerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<GetPlayerResponse> getPlayer(@PathVariable Long id) {
-        Player player = playerService.getPlayerById(id);
-        GetPlayerResponse getPlayerResponse = playerMapper.toGetPlayerResponse(player);
+        Optional<Player> player = playerService.getPlayerById(id);
+        if (player.isEmpty()) {
+            throw new PlayerNotFoundException("Player %s not found".formatted(id));
+        }
+        GetPlayerResponse getPlayerResponse = playerMapper.toGetPlayerResponse(player.get());
         return ResponseEntity.ok(getPlayerResponse);
     }
 
     @PostMapping
     public ResponseEntity<CreatePlayerResponse> createPlayer(@Valid @RequestBody CreatePlayerRequest request) {
-        Player player = playerMapper.fromCreateRequest(request);
+        Player player = playerMapper.toPlayer(request);
         long playerId = playerService.createPlayer(player);
 
         URI location = ServletUriComponentsBuilder

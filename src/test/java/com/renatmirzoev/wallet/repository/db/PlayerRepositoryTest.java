@@ -1,4 +1,4 @@
-package com.renatmirzoev.wallet.repository;
+package com.renatmirzoev.wallet.repository.db;
 
 import com.renatmirzoev.wallet.AbstractIntegrationTest;
 import com.renatmirzoev.wallet.ModelUtils;

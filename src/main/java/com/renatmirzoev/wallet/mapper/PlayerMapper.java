@@ -8,7 +8,7 @@ import org.mapstruct.Mapper;
 @Mapper(config = MapperConfig.class)
 public interface PlayerMapper {
 
-    Player fromCreateRequest(CreatePlayerRequest request);
+    Player toPlayer(CreatePlayerRequest request);
 
     GetPlayerResponse toGetPlayerResponse(Player player);
 }
