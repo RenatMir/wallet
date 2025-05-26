@@ -1,18 +1,13 @@
 CREATE TABLE players
 (
     id           SERIAL PRIMARY KEY,
-    full_name    VARCHAR(255) NOT NULL,
-    email        VARCHAR(255) NOT NULL UNIQUE,
+    full_name    VARCHAR(255)   NOT NULL,
+    email        VARCHAR(255)   NOT NULL UNIQUE,
     phone_number VARCHAR(255),
-    date_created timestamptz  NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE player_balance
-(
-    player_id    INTEGER PRIMARY KEY REFERENCES players (id),
-    amount       NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    balance      NUMERIC(12, 2) NOT NULL DEFAULT 0,
     date_created timestamptz    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX idx_players_email ON players (email);
 
 CREATE TABLE transactions
 (

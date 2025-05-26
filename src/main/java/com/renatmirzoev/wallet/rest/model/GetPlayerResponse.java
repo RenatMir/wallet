@@ -1,18 +1,16 @@
-package com.renatmirzoev.wallet.model.entity;
+package com.renatmirzoev.wallet.rest.model;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 
 @Data
 @Accessors(chain = true)
-public class Player {
+public class GetPlayerResponse {
     private long id;
     private String fullName;
     private String email;
     private String phoneNumber;
     private BigDecimal balance;
-    private Instant dateCreated;
 }

@@ -1,12 +1,14 @@
 package com.renatmirzoev.wallet.mapper;
 
 import com.renatmirzoev.wallet.model.entity.Player;
-import com.renatmirzoev.wallet.model.rest.CreatePlayerRequest;
+import com.renatmirzoev.wallet.rest.model.CreatePlayerRequest;
+import com.renatmirzoev.wallet.rest.model.GetPlayerResponse;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING)
+@Mapper(config = MapperConfig.class)
 public interface PlayerMapper {
 
     Player fromCreateRequest(CreatePlayerRequest request);
+
+    GetPlayerResponse toGetPlayerResponse(Player player);
 }

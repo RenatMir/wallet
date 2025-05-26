@@ -1,20 +1,27 @@
 package com.renatmirzoev.wallet.repository;
 
 import com.renatmirzoev.wallet.model.entity.Player;
-import io.r2dbc.spi.Parameter;
-import io.r2dbc.spi.Parameters;
-import io.r2dbc.spi.R2dbcType;
 import lombok.RequiredArgsConstructor;
-import org.springframework.r2dbc.core.DatabaseClient;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
 public class PlayerRepository {
+
+    private static final String SQL_SELECT_PLAYER_BY_ID = """
+        SELECT * FROM players
+        WHERE id = :id
+        """;
+
+    private static final String SQL_SELECT_PLAYER_BY_EMAIL = """
+        SELECT * FROM players
+        WHERE email = :email
+        """;
 
     private static final String SQL_INSERT_PLAYER = """
         INSERT INTO players (full_name, email, phone_number)
@@ -22,21 +29,54 @@ public class PlayerRepository {
         RETURNING id;
         """;
 
-    private final DatabaseClient databaseClient;
+    private static final String SQL_UPDATE_BALANCE = """
+        UPDATE players
+        SET balance = balance + :amount
+        WHERE id = :playerId
+        AND balance + :amount >= 0
+        """;
 
-    public Mono<Long> save(Player player) {
-        if (player == null) {
-            return Mono.empty();
-        }
+    private static final RowMapper<Player> ROW_MAPPER_PLAYER = (rs, rowNum) -> {
+        Player player = new Player();
+        player.setId(rs.getInt("id"));
+        player.setFullName(rs.getString("full_name"));
+        player.setEmail(rs.getString("email"));
+        player.setPhoneNumber(rs.getString("phone_number"));
+        player.setBalance(rs.getBigDecimal("balance"));
+        player.setDateCreated(rs.getTimestamp("date_created").toInstant());
+        return player;
+    };
 
-        Map<String, Parameter> parameters = new HashMap<>();
-        parameters.put("fullName", Parameters.in(R2dbcType.VARCHAR, player.getFullName()));
-        parameters.put("email", Parameters.in(R2dbcType.VARCHAR, player.getEmail()));
-        parameters.put("phoneNumber", Parameters.in(R2dbcType.VARCHAR, player.getPhoneNumber()));
+    private final JdbcClient jdbcClient;
 
-        return databaseClient.sql(SQL_INSERT_PLAYER)
-            .bindValues(parameters)
-            .map(rs -> rs.get("id", Long.class))
-            .one();
+    public Optional<Player> getById(long playerId) {
+        return jdbcClient.sql(SQL_SELECT_PLAYER_BY_ID)
+            .param("id", playerId)
+            .query(ROW_MAPPER_PLAYER)
+            .optional();
     }
+
+    public Optional<Player> getByEmail(String email) {
+        return jdbcClient.sql(SQL_SELECT_PLAYER_BY_EMAIL)
+            .param("email", email)
+            .query(ROW_MAPPER_PLAYER)
+            .optional();
+    }
+
+    public long save(Player player) {
+        return jdbcClient.sql(SQL_INSERT_PLAYER)
+            .param("fullName", player.getFullName())
+            .param("email", player.getEmail())
+            .param("phoneNumber", player.getPhoneNumber())
+            .query(Long.class)
+            .single();
+    }
+
+    public int updateBalance(long playerId, BigDecimal amount) {
+        return jdbcClient.sql(SQL_UPDATE_BALANCE)
+            .param("playerId", playerId)
+            .param("amount", amount)
+            .update();
+    }
+
 }
