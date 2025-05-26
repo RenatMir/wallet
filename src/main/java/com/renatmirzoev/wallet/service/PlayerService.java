@@ -6,7 +6,6 @@ import com.renatmirzoev.wallet.exception.PlayerNotFoundException;
 import com.renatmirzoev.wallet.model.entity.Player;
 import com.renatmirzoev.wallet.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +27,12 @@ public class PlayerService {
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)
     public long createPlayer(Player player) {
-        long playerId;
-        try {
-            playerId = playerRepository.save(player);
-        } catch (DataIntegrityViolationException e) {
+        Optional<Player> playerOptional = playerRepository.getByEmail(player.getEmail());
+        if (playerOptional.isPresent()) {
             throw new PlayerAlreadyExistException("Player already exists");
         }
-        return playerId;
+
+        return playerRepository.save(player);
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = false)

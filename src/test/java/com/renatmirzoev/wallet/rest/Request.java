@@ -1,6 +1,6 @@
 package com.renatmirzoev.wallet.rest;
 
-import com.renatmirzoev.wallet.utils.JsonUtils;
+import com.renatmirzoev.wallet.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;

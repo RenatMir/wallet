@@ -11,7 +11,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -20,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,21 +38,23 @@ class PlayerServiceTest {
         long expectedPlayerId = 1;
 
         when(playerRepository.save(any(Player.class))).thenReturn(expectedPlayerId);
+        when(playerRepository.getByEmail(anyString())).thenReturn(Optional.empty());
 
         long playerId = playerService.createPlayer(player);
 
         assertThat(playerId).isEqualTo(expectedPlayerId);
+        verify(playerRepository).getByEmail(anyString());
         verify(playerRepository).save(any(Player.class));
     }
 
     @Test
     void shouldThrowPlayerAlreadyExistsExceptionOnCreatePlayer() {
-        when(playerRepository.save(any(Player.class))).thenThrow(DataIntegrityViolationException.class);
+        when(playerRepository.getByEmail(anyString())).thenReturn(Optional.of(player));
 
         assertThatThrownBy(() -> playerService.createPlayer(player))
             .isInstanceOf(PlayerAlreadyExistException.class);
 
-        verify(playerRepository).save(any(Player.class));
+        verify(playerRepository).getByEmail(anyString());
     }
 
 

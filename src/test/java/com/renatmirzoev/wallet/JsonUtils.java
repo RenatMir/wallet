@@ -1,11 +1,10 @@
-package com.renatmirzoev.wallet.utils;
+package com.renatmirzoev.wallet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.renatmirzoev.wallet.config.JsonConfig;
+import com.renatmirzoev.wallet.exception.JsonParsingException;
 import org.springframework.lang.Nullable;
 
 
@@ -14,21 +13,17 @@ public class JsonUtils {
     private JsonUtils() {
     }
 
-    public static final ObjectMapper MAPPER = new ObjectMapper();
+    public static final ObjectMapper MAPPER;
 
     static {
-        MAPPER.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-        MAPPER.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        MAPPER.registerModule(new JavaTimeModule());
+        MAPPER = new JsonConfig().objectMapper();
     }
 
     public static <T> String toJson(T object) {
         try {
             return MAPPER.writeValueAsString(object);
         } catch (JsonProcessingException exception) {
-            throw new RuntimeException("Error during serialization", exception);
+            throw new JsonParsingException("Error during serialization", exception);
         }
     }
 
@@ -36,7 +31,7 @@ public class JsonUtils {
         try {
             return MAPPER.readValue(json, typeReference);
         } catch (JsonProcessingException exception) {
-            throw new RuntimeException("Error during deserialization", exception);
+            throw new JsonParsingException("Error during deserialization", exception);
         }
     }
 
@@ -45,7 +40,7 @@ public class JsonUtils {
         try {
             return MAPPER.readValue(json, clazz);
         } catch (JsonProcessingException exception) {
-            throw new RuntimeException("Error during deserialization", exception);
+            throw new JsonParsingException("Error during deserialization", exception);
         }
     }
 }
