@@ -1,6 +1,7 @@
 package com.renatmirzoev.wallet.repository.db;
 
 import com.renatmirzoev.wallet.model.entity.Player;
+import com.renatmirzoev.wallet.utils.JdbcUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -15,12 +16,12 @@ public class PlayerRepository {
 
     private static final String SQL_SELECT_PLAYER_BY_ID = """
         SELECT * FROM players
-        WHERE id = :id
+        WHERE id = :id;
         """;
 
     private static final String SQL_SELECT_PLAYER_BY_EMAIL = """
         SELECT * FROM players
-        WHERE email = :email
+        WHERE email = :email;
         """;
 
     private static final String SQL_INSERT_PLAYER = """
@@ -33,19 +34,8 @@ public class PlayerRepository {
         UPDATE players
         SET balance = balance + :amount
         WHERE id = :playerId
-        AND balance + :amount >= 0
+        AND balance + :amount >= 0;
         """;
-
-    private static final RowMapper<Player> ROW_MAPPER_PLAYER = (rs, rowNum) -> {
-        Player player = new Player();
-        player.setId(rs.getInt("id"));
-        player.setFullName(rs.getString("full_name"));
-        player.setEmail(rs.getString("email"));
-        player.setPhoneNumber(rs.getString("phone_number"));
-        player.setBalance(rs.getBigDecimal("balance"));
-        player.setDateCreated(rs.getTimestamp("date_created").toInstant());
-        return player;
-    };
 
     private final JdbcClient jdbcClient;
 
@@ -79,4 +69,12 @@ public class PlayerRepository {
             .update();
     }
 
+    private static final RowMapper<Player> ROW_MAPPER_PLAYER = (rs, rowNum) ->
+        new Player()
+            .setId(rs.getInt("id"))
+            .setFullName(rs.getString("full_name"))
+            .setEmail(rs.getString("email"))
+            .setPhoneNumber(rs.getString("phone_number"))
+            .setBalance(rs.getBigDecimal("balance"))
+            .setDateCreated(JdbcUtils.instantOrNull(rs.getTimestamp("date_created")));
 }

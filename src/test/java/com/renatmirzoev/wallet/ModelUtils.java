@@ -1,5 +1,7 @@
 package com.renatmirzoev.wallet;
 
+import com.renatmirzoev.wallet.model.entity.GameRound;
+import com.renatmirzoev.wallet.model.entity.GameRoundAction;
 import com.renatmirzoev.wallet.model.entity.Player;
 import com.renatmirzoev.wallet.rest.model.CreatePlayerRequest;
 import org.instancio.Instancio;
@@ -26,5 +28,21 @@ public class ModelUtils {
             .ignore(field(Player::getId))
             .ignore(field(Player::getDateCreated))
             .create();
+    }
+
+    public static GameRound createGameRound() {
+        GameRound gameRound = Instancio.of(GameRound.class)
+            .ignore(field(GameRound::getId))
+            .ignore(field(GameRound::getDateCreated))
+            .ignore(field(GameRoundAction::getId))
+            .ignore(field(GameRoundAction::getDateCreated))
+            .create();
+
+        gameRound.getActions()
+            .forEach(action -> {
+                action.setGameRoundUuid(gameRound.getUuid());
+            });
+
+        return gameRound;
     }
 }
